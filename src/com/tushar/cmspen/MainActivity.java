@@ -35,7 +35,7 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         Events.intEnableDebug(1);
         setContentView(R.layout.main);
-        final int pvalues[] = {100,250,500,750,1000,1250,1500,1750,2000,2250,2500,2750,3000,3250,3500,3750,4000,4250,4500,4750,5000};
+        final int pvalues[] = {100,250,500,750,1000,1250,1500,1750,2000,2250,2500,2750,3000,3250,3500,3750,4000};
         final SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
         final TextView polltext = (TextView) findViewById(R.id.pollingvalue);
         final TextView soffpolltext = (TextView) findViewById(R.id.soffpollingvalue);
