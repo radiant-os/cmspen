@@ -49,17 +49,23 @@ public class SPenDetection extends Service {
 	{
 		events.Init();
 		final SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-		SharedPreferences.Editor editor = pref.edit();
-		editor.putBoolean("detection", true);
-		editor.commit();
+		final SharedPreferences.Editor editor = pref.edit();
 		polling = pvalues[pref.getInt("polling", 0)];
-        for (InputDevice idev:events.m_Devs) {
+        /*for (InputDevice idev:events.m_Devs) {
         	{
-        		idev.Open(true);
-        		if(idev.getName().contains("sec_e-pen") == true)
-        			id = events.m_Devs.indexOf(idev);
+        		try
+        		{
+        			if(idev.Open(true))
+        				if(idev.getName().contains("sec_e-pen") == true)
+        					id = events.m_Devs.indexOf(idev);
+        		}
+        		catch(Exception e)
+        		{
+        			e.printStackTrace();
+        		}
         	}
-        }
+        }*/
+		id = pref.getInt("id", -1);
         if(id == -1)
         	running = false;
         v = (Vibrator) getApplicationContext().getSystemService(VIBRATOR_SERVICE);
@@ -72,8 +78,12 @@ public class SPenDetection extends Service {
         	registerReceiver(mReceiver, filter);
         }
         final InputDevice idev = events.m_Devs.get(id);
+        if(idev.Open(true) == false)
+        {
+        	running = false;
+        }
         final WakeLock screenLock = ((PowerManager)getSystemService(POWER_SERVICE)).newWakeLock(
-				PowerManager.FULL_WAKE_LOCK | PowerManager.ACQUIRE_CAUSES_WAKEUP, "TAG");
+				PowerManager.FULL_WAKE_LOCK | PowerManager.ACQUIRE_CAUSES_WAKEUP, "CM S Pen Add-on");
         new Thread(new Runnable() {
 			public void run() {
 				while (running) {
@@ -83,9 +93,11 @@ public class SPenDetection extends Service {
 							if(idev.getSuccessfulPollingValue() == 1)
 							{
 								i.putExtra("penInsert", false);
-								polling = 30;
+								polling = 20;
 								screenLock.acquire();
 								screenLock.release();
+								editor.putBoolean("detached", true);
+								editor.commit();
 								sendBroadcast(i);
 								v.vibrate(75);
 							}
@@ -93,6 +105,8 @@ public class SPenDetection extends Service {
 							{
 								i.putExtra("penInsert", true);
 								polling = pvalues[pref.getInt("polling", 0)];
+								editor.putBoolean("detached", false);
+								editor.commit();
 								sendBroadcast(i);
 								v.vibrate(75);
 							}
@@ -123,8 +137,5 @@ public class SPenDetection extends Service {
     	if(pref.getBoolean("soffchk", false))
     		if(mReceiver != null)
     			unregisterReceiver(mReceiver);
-    	SharedPreferences.Editor editor = pref.edit();
-		editor.putBoolean("detection", false);
-		editor.commit();
     }
 }

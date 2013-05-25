@@ -17,9 +17,16 @@
 package com.tushar.cmspen;
 
 import net.pocketmagic.android.eventinjector.Events;
+import net.pocketmagic.android.eventinjector.Events.InputDevice;
+
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.ProgressDialog;
+import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.widget.CompoundButton;
@@ -30,22 +37,56 @@ import android.widget.Toast;
 import android.widget.ToggleButton;
 
 public class MainActivity extends Activity {
+	int id = -1;
+	boolean compatible = false;
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Events.intEnableDebug(1);
         setContentView(R.layout.main);
-        final int pvalues[] = {100,250,500,750,1000,1250,1500,1750,2000,2250,2500,2750,3000,3250,3500,3750,4000};
         final SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        if(pref.getInt("id", id) == -1)
+        {
+        	try {
+        		compatible = new CheckComp().execute().get();
+        	} catch (Exception e) {
+        		e.printStackTrace();
+        	}
+        	if(compatible)
+        	{
+        		SharedPreferences.Editor editor = pref.edit();
+        		editor.putInt("id", id);
+        		editor.commit();
+        	}
+        	else
+        	{
+        		AlertDialog.Builder builderdonate = new AlertDialog.Builder(this);
+        		builderdonate.setTitle("CM S Pen Add-on");
+        		builderdonate.setMessage("Sorry your phone is not compatible with this Application. You can visit the XDA thread of this application for further help or email me.");
+        		builderdonate.setNeutralButton("Ok", new DialogInterface.OnClickListener() {
+        			public void onClick(DialogInterface dialog, int id) {
+        				finish();
+        			}
+        		});
+        		builderdonate.setCancelable(false);
+        		builderdonate.show();
+        	}
+        }
+        final int pvalues[] = {100,250,500,750,1000,1250,1500,1750,2000,2250,2500,2750,3000,3250,3500,3750,4000};
         final TextView polltext = (TextView) findViewById(R.id.pollingvalue);
         final TextView soffpolltext = (TextView) findViewById(R.id.soffpollingvalue);
         ToggleButton startStop = (ToggleButton) findViewById(R.id.onOfftoggle);
-        ToggleButton soffchk = (ToggleButton) findViewById(R.id.soffpollingtoggle);
-        SeekBar pvalue = (SeekBar) findViewById(R.id.polling);
+        final ToggleButton soffchk = (ToggleButton) findViewById(R.id.soffpollingtoggle);
+        final SeekBar pvalue = (SeekBar) findViewById(R.id.polling);
         final SeekBar soffpvalue = (SeekBar) findViewById(R.id.soffpolling);
-        if(pref.getBoolean("detection", false))
+        if(pref.getBoolean("enabled", false))
         {
         	startStop.setChecked(true);
+        }
+        else
+        {
+        	soffchk.setEnabled(false);
+        	pvalue.setEnabled(false);
+        	soffpvalue.setEnabled(false);
         }
         if(pref.getBoolean("soffchk", false))
         {
@@ -69,25 +110,31 @@ public class MainActivity extends Activity {
         }
         pvalue.setProgress(pref.getInt("pollingchoice", 0));
         polltext.setText("Polling Value: " + String.valueOf(pvalues[pref.getInt("pollingchoice", 0)]));
-        soffpvalue.setProgress(pref.getInt("soffpolling", 0)-8);
+        soffpvalue.setProgress(pref.getInt("soffpolling", 0));
         soffpolltext.setText("Screen-off Polling Value: " + String.valueOf(pvalues[pref.getInt("soffpolling", 0)]));
         startStop.setOnCheckedChangeListener(new OnCheckedChangeListener() {
             public void onCheckedChanged(CompoundButton toggleButton, boolean isChecked) {
                 if(isChecked)
                 {
-                	StartEventMonitor();
+                	StartEventMonitor(MainActivity.this);
     				Toast.makeText(MainActivity.this, "Event monitor started.", Toast.LENGTH_SHORT).show();
                 	SharedPreferences.Editor editor = pref.edit();
     				editor.putBoolean("enabled", true);
     				editor.commit();
+    				soffchk.setEnabled(true);
+    	        	pvalue.setEnabled(true);
+    	        	soffpvalue.setEnabled(true);
                 }
                 else
                 {
                 	Toast.makeText(MainActivity.this, "Event monitor stopped.", Toast.LENGTH_SHORT).show();
-    				StopEventMonitor();
+    				StopEventMonitor(MainActivity.this);
     				SharedPreferences.Editor editor = pref.edit();
     				editor.putBoolean("enabled", false);
     				editor.commit();
+    				soffchk.setEnabled(false);
+    	        	pvalue.setEnabled(false);
+    	        	soffpvalue.setEnabled(false);
                 }
             }
         });
@@ -99,8 +146,8 @@ public class MainActivity extends Activity {
     				editor.putBoolean("soffchk", true);
     				editor.commit();
     				soffpvalue.setEnabled(true);
-    				StopEventMonitor();
-    				StartEventMonitor();
+    				StopEventMonitor(MainActivity.this);
+    				StartEventMonitor(MainActivity.this);
                 }
                 else
                 {
@@ -108,8 +155,8 @@ public class MainActivity extends Activity {
     				editor.putBoolean("soffchk", false);
     				editor.commit();
     				soffpvalue.setEnabled(false);
-    				StopEventMonitor();
-    				StartEventMonitor();
+    				StopEventMonitor(MainActivity.this);
+    				StartEventMonitor(MainActivity.this);
                 }
             }
         });
@@ -130,9 +177,9 @@ public class MainActivity extends Activity {
         soffpvalue.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener(){
 
 			public void onProgressChanged(SeekBar arg0, int arg1, boolean arg2) {
-				soffpolltext.setText("Screen-off Polling Value: " + String.valueOf(pvalues[arg1+8]));
+				soffpolltext.setText("Screen-off Polling Value: " + String.valueOf(pvalues[arg1]));
 				SharedPreferences.Editor editor = pref.edit();
-				editor.putInt("soffpolling", arg1+8);
+				editor.putInt("soffpolling", arg1);
 				editor.commit();
 			}
 			public void onStartTrackingTouch(SeekBar seekBar) {
@@ -147,19 +194,64 @@ public class MainActivity extends Activity {
     public void onDestroy() {
     	super.onDestroy();
     }
-	public void StopEventMonitor() {
-		SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+	public static void StopEventMonitor(Context ctx) {
+		SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(ctx);
 		if(pref.getBoolean("soffchk", false))
-			stopService(new Intent(this,SPenDetection.class));
+			ctx.stopService(new Intent(ctx,SPenDetection.class));
 		else
-			stopService(new Intent(this,BackgroundService.class));
+			ctx.stopService(new Intent(ctx,BackgroundService.class));
 	}
 	
-	public void StartEventMonitor() {
-		SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+	public static void StartEventMonitor(Context ctx) {
+		SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(ctx);
 		if(pref.getBoolean("soffchk", false))
-			startService(new Intent(this,SPenDetection.class));
+			ctx.startService(new Intent(ctx,SPenDetection.class));
 		else
-			startService(new Intent(this,BackgroundService.class));
+			ctx.startService(new Intent(ctx,BackgroundService.class));
+	}
+	
+	class CheckComp extends AsyncTask<Void, Void, Boolean> {
+	    ProgressDialog mDialog = new ProgressDialog(MainActivity.this);
+		
+	    @Override
+		protected void onPreExecute()
+	    {
+	        mDialog.setMessage("             Checking Compatibility");
+	    	mDialog.setProgressStyle(ProgressDialog.THEME_HOLO_DARK);
+	        mDialog.setIndeterminate(true);
+	        mDialog.setCancelable(false);
+	        mDialog.show();
+	    }
+
+		@Override
+		protected Boolean doInBackground(Void... arg0) {
+			Events events = new Events();
+			events.Init();
+			Boolean temp = false;
+			for (InputDevice idev:events.m_Devs) {
+	        	{
+	        		try
+	        		{
+	        			if(idev.Open(true))
+	        				if(idev.getName().contains("sec_e-pen") == true)
+	        				{
+	        					temp = true;
+	        					id = events.m_Devs.indexOf(idev);
+	        					break;
+	        				}
+	        		}
+	        		catch(Exception e)
+	        		{
+	        			e.printStackTrace();
+	        		}
+	        	}
+	        }
+			return temp;
+		}
+		
+		@Override
+	    protected void onPostExecute(Boolean v) {
+			mDialog.dismiss();
+	    }
 	}
 }

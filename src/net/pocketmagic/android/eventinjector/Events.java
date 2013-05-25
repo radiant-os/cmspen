@@ -96,7 +96,8 @@ public class Events
 	
 	public void Release() {
 		for (InputDevice idev: m_Devs)
-			idev.Close();
+			if(idev.getOpen())
+				idev.Close();
 	}
 	   	 
 	// JNI native code interface
