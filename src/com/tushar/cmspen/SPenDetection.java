@@ -16,10 +16,14 @@
 
 package com.tushar.cmspen;
 
+import java.util.Timer;
+import java.util.TimerTask;
+
 import net.pocketmagic.android.eventinjector.Events;
 import net.pocketmagic.android.eventinjector.Events.InputDevice;
 import android.app.Service;
 import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
@@ -31,13 +35,19 @@ import android.preference.PreferenceManager;
 
 public class SPenDetection extends Service {
 	Events events = new Events();
-	Vibrator v;
+	static Vibrator v;
 	boolean running = true;
 	int id = -1;
 	public static int polling = 1000;
 	BroadcastReceiver mReceiver;
 	public static int pvalues[] = {100,250,500,750,1000,1250,1500,1750,2000,2250,2500,2750,3000,3250,3500,3750,4000};
-	Intent i = new Intent("com.samsung.pen.INSERT");
+	static Intent i = new Intent("com.samsung.pen.INSERT");
+	public static TimerTask task;
+	public static Timer timer;
+	static WakeLock screenLock;
+	static InputDevice idev;
+	static SharedPreferences pref;
+	static SharedPreferences.Editor editor;
 	
 	@Override
 	public IBinder onBind(Intent intent) {
@@ -48,8 +58,8 @@ public class SPenDetection extends Service {
 	public void onCreate()
 	{
 		events.Init();
-		final SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-		final SharedPreferences.Editor editor = pref.edit();
+		pref = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+		editor = pref.edit();
 		polling = pvalues[pref.getInt("polling", 0)];
         /*for (InputDevice idev:events.m_Devs) {
         	{
@@ -77,14 +87,47 @@ public class SPenDetection extends Service {
         	mReceiver = new ScreenReceiver();
         	registerReceiver(mReceiver, filter);
         }
-        final InputDevice idev = events.m_Devs.get(id);
+        idev = events.m_Devs.get(id);
         if(idev.Open(true) == false)
         {
         	running = false;
         }
-        final WakeLock screenLock = ((PowerManager)getSystemService(POWER_SERVICE)).newWakeLock(
+        screenLock = ((PowerManager)getSystemService(POWER_SERVICE)).newWakeLock(
 				PowerManager.FULL_WAKE_LOCK | PowerManager.ACQUIRE_CAUSES_WAKEUP, "CM S Pen Add-on");
-        new Thread(new Runnable() {
+        timer = new Timer();
+        task = new TimerTask(){
+        	public void run() {
+        		if (idev.getPollingEvent() == 0) {
+					if(idev.getSuccessfulPollingType() == 5 && idev.getSuccessfulPollingCode() == 14)
+					{
+						if(idev.getSuccessfulPollingValue() == 1)
+						{
+							i.putExtra("penInsert", false);
+							polling = 20;
+							refreshTimer(polling,getApplicationContext());
+							screenLock.acquire();
+							screenLock.release();
+							editor.putBoolean("detached", true);
+							editor.commit();
+							sendBroadcast(i);
+							v.vibrate(75);
+						}
+						if(idev.getSuccessfulPollingValue() == 0)
+						{
+							i.putExtra("penInsert", true);
+							polling = pvalues[pref.getInt("polling", 0)];
+							refreshTimer(polling,getApplicationContext());
+							editor.putBoolean("detached", false);
+							editor.commit();
+							sendBroadcast(i);
+							v.vibrate(75);
+						}
+					}
+        		}
+            }
+        };
+        timer.schedule(task, polling, polling);
+        /*new Thread(new Runnable() {
 			public void run() {
 				while (running) {
 					if (idev.getPollingEvent() == 0) {
@@ -122,7 +165,7 @@ public class SPenDetection extends Service {
 					}
 				}
 			}
-		}).start();
+		}).start();*/
 	}
 	
 	@Override
@@ -137,5 +180,45 @@ public class SPenDetection extends Service {
     	if(pref.getBoolean("soffchk", false))
     		if(mReceiver != null)
     			unregisterReceiver(mReceiver);
+    	task.cancel();
+    	timer.cancel();
     }
+	
+	public static void refreshTimer(int newtime, final Context ctx)
+	{
+		if(task != null)
+			task.cancel();
+		task = new TimerTask(){
+        	public void run() {
+        		if (idev.getPollingEvent() == 0) {
+					if(idev.getSuccessfulPollingType() == 5 && idev.getSuccessfulPollingCode() == 14)
+					{
+						if(idev.getSuccessfulPollingValue() == 1)
+						{
+							i.putExtra("penInsert", false);
+							polling = 20;
+							refreshTimer(polling,ctx);
+							screenLock.acquire();
+							screenLock.release();
+							editor.putBoolean("detached", true);
+							editor.commit();
+							ctx.sendBroadcast(i);
+							v.vibrate(75);
+						}
+						if(idev.getSuccessfulPollingValue() == 0)
+						{
+							i.putExtra("penInsert", true);
+							polling = pvalues[pref.getInt("polling", 0)];
+							refreshTimer(polling,ctx);
+							editor.putBoolean("detached", false);
+							editor.commit();
+							ctx.sendBroadcast(i);
+							v.vibrate(75);
+						}
+					}
+        		}
+            }
+        };
+		timer.schedule(task, newtime, newtime);
+	}
 }

@@ -36,7 +36,10 @@ public class ScreenReceiver extends BroadcastReceiver {
         		editor.putInt("polling", pref.getInt("soffpolling",8));
         		editor.commit();
         		if(pref.getBoolean("detached", false) == false)
-        			SPenDetection.polling = SPenDetection.pvalues[pref.getInt("polling", 0)];
+        			{
+        				SPenDetection.polling = SPenDetection.pvalues[pref.getInt("polling", 0)];
+        				SPenDetection.refreshTimer(SPenDetection.polling, context);
+        			}
         	}
         } else if (intent.getAction().equals(Intent.ACTION_SCREEN_ON)) {
         	if(pref.getBoolean("soffchk", false) == false)
@@ -46,7 +49,10 @@ public class ScreenReceiver extends BroadcastReceiver {
         		editor.putInt("polling", pref.getInt("pollingchoice",4));
         		editor.commit();
         		if(pref.getBoolean("detached", false) == false)
-        			SPenDetection.polling = SPenDetection.pvalues[pref.getInt("polling", 0)];
+        			{
+        				SPenDetection.polling = SPenDetection.pvalues[pref.getInt("polling", 0)];
+        				SPenDetection.refreshTimer(SPenDetection.polling, context);
+        			}
         	}
         }
         if(intent.getAction().equals(Intent.ACTION_BOOT_COMPLETED))
