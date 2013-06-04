@@ -36,7 +36,6 @@ import android.preference.PreferenceManager;
 public class SPenDetection extends Service {
 	Events events = new Events();
 	static Vibrator v;
-	boolean running = true;
 	int id = -1;
 	public static int polling = 1000;
 	BroadcastReceiver mReceiver;
@@ -61,23 +60,11 @@ public class SPenDetection extends Service {
 		pref = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 		editor = pref.edit();
 		polling = pvalues[pref.getInt("polling", 0)];
-        /*for (InputDevice idev:events.m_Devs) {
-        	{
-        		try
-        		{
-        			if(idev.Open(true))
-        				if(idev.getName().contains("sec_e-pen") == true)
-        					id = events.m_Devs.indexOf(idev);
-        		}
-        		catch(Exception e)
-        		{
-        			e.printStackTrace();
-        		}
-        	}
-        }*/
 		id = pref.getInt("id", -1);
         if(id == -1)
-        	running = false;
+        {
+        	stopSelf();
+        }
         v = (Vibrator) getApplicationContext().getSystemService(VIBRATOR_SERVICE);
         if(pref.getBoolean("soffchk", false))
         {
@@ -90,13 +77,14 @@ public class SPenDetection extends Service {
         idev = events.m_Devs.get(id);
         if(idev.Open(true) == false)
         {
-        	running = false;
+        	stopSelf();
         }
         screenLock = ((PowerManager)getSystemService(POWER_SERVICE)).newWakeLock(
 				PowerManager.FULL_WAKE_LOCK | PowerManager.ACQUIRE_CAUSES_WAKEUP, "CM S Pen Add-on");
         timer = new Timer();
         task = new TimerTask(){
         	public void run() {
+        		try{
         		if (idev.getPollingEvent() == 0) {
 					if(idev.getSuccessfulPollingType() == 5 && idev.getSuccessfulPollingCode() == 14)
 					{
@@ -124,48 +112,14 @@ public class SPenDetection extends Service {
 						}
 					}
         		}
+        		}
+        		catch(Exception e)
+        		{
+        			stopSelf();
+        		}
             }
         };
         timer.schedule(task, polling, polling);
-        /*new Thread(new Runnable() {
-			public void run() {
-				while (running) {
-					if (idev.getPollingEvent() == 0) {
-						if(idev.getSuccessfulPollingType() == 5 && idev.getSuccessfulPollingCode() == 14)
-						{
-							if(idev.getSuccessfulPollingValue() == 1)
-							{
-								i.putExtra("penInsert", false);
-								polling = 20;
-								screenLock.acquire();
-								screenLock.release();
-								editor.putBoolean("detached", true);
-								editor.commit();
-								sendBroadcast(i);
-								v.vibrate(75);
-							}
-							if(idev.getSuccessfulPollingValue() == 0)
-							{
-								i.putExtra("penInsert", true);
-								polling = pvalues[pref.getInt("polling", 0)];
-								editor.putBoolean("detached", false);
-								editor.commit();
-								sendBroadcast(i);
-								v.vibrate(75);
-							}
-						}
-					}
-					try
-					{
-						Thread.sleep(polling);
-					}
-					catch(Exception e)
-					{
-						e.printStackTrace();
-					}
-				}
-			}
-		}).start();*/
 	}
 	
 	@Override
@@ -176,7 +130,6 @@ public class SPenDetection extends Service {
 		polling = pvalues[pref.getInt("polling", 0)];
 		sendBroadcast(i);
     	events.Release();
-    	running = false;
     	if(pref.getBoolean("soffchk", false))
     		if(mReceiver != null)
     			unregisterReceiver(mReceiver);
