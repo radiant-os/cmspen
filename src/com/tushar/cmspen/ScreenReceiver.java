@@ -38,7 +38,6 @@ public class ScreenReceiver extends BroadcastReceiver {
         		if(pref.getBoolean("detached", false) == false)
         			{
         				SPenDetection.polling = SPenDetection.pvalues[pref.getInt("polling", 0)];
-        				SPenDetection.refreshTimer(SPenDetection.polling, context);
         			}
         	}
         } else if (intent.getAction().equals(Intent.ACTION_SCREEN_ON)) {
@@ -51,25 +50,15 @@ public class ScreenReceiver extends BroadcastReceiver {
         		if(pref.getBoolean("detached", false) == false)
         			{
         				SPenDetection.polling = SPenDetection.pvalues[pref.getInt("polling", 0)];
-        				SPenDetection.refreshTimer(SPenDetection.polling, context);
         			}
         	}
         }
-        if(intent.getAction().equals(Intent.ACTION_BOOT_COMPLETED))
+        else
         {
         	if(pref.getBoolean("enabled", false))
         	{
-        		//if(pref.getBoolean("soffchk", false))
-        		//{
-        			//context.startService(new Intent(context,SPenDetection.class));
-        			//context.stopService(new Intent(context,BackgroundService.class));
-        		//}
-        		//else
-        		//{
-        			//context.startService(new Intent(context,BackgroundService.class));
-        			MainActivity.StopEventMonitor(context);
-        			MainActivity.StartEventMonitor(context);
-        		//}
+        		MainActivity.StopEventMonitor(context);
+        		MainActivity.StartEventMonitor(context);
         	}
         }
     }
