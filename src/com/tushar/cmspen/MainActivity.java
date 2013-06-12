@@ -61,7 +61,7 @@ public class MainActivity extends Activity {
         	{
         		AlertDialog.Builder builderdonate = new AlertDialog.Builder(this);
         		builderdonate.setTitle("CM S Pen Add-on");
-        		builderdonate.setMessage("Sorry your phone is not compatible with this Application. You can visit the XDA thread of this application for further help or email me.");
+        		builderdonate.setMessage("Sorry your device is not compatible with this Application. Please email me for further assistance.");
         		builderdonate.setNeutralButton("Ok", new DialogInterface.OnClickListener() {
         			public void onClick(DialogInterface dialog, int id) {
         				finish();
