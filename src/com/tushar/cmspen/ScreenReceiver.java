@@ -59,6 +59,7 @@ public class ScreenReceiver extends BroadcastReceiver {
         	{
         		MainActivity.StopEventMonitor(context);
         		MainActivity.StartEventMonitor(context);
+        		Alarm.startAlarm(context);
         	}
         }
     }
