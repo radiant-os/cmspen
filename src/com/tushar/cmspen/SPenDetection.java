@@ -76,12 +76,12 @@ public class SPenDetection extends Service {
         try
         {
         	idev = events.m_Devs.get(id);
+        	if(idev.Open(true) == false)
+        	{
+        		stopSelf();
+        	}
         }
         catch(Exception e)
-        {
-        	stopSelf();
-        }
-        if(idev.Open(true) == false)
         {
         	stopSelf();
         }
@@ -103,6 +103,7 @@ public class SPenDetection extends Service {
     	timer.cancel();
     	if(screenLock.isHeld())
     		screenLock.release();
+    	Alarm.cancelAlarm();
     }
 	
 	class SPenTask extends TimerTask
