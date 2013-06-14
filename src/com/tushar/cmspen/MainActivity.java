@@ -39,6 +39,7 @@ import android.widget.ToggleButton;
 public class MainActivity extends Activity {
 	int id = -1;
 	boolean compatible = false;
+	
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
