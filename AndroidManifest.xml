@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.tushar.cmspen"
-    android:versionCode="7"
-    android:versionName="0.3.0" >
+    android:versionCode="8"
+    android:versionName="0.3.1" >
 
     <uses-sdk
         android:minSdkVersion="16"
@@ -11,9 +11,9 @@
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.ACCESS_SUPERUSER" />
-	<uses-permission android:name="android.permission.WAKE_LOCK" />
-	<uses-permission android:name="android.permission.BROADCAST_STICKY" />
-    
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.BROADCAST_STICKY" />
+
     <application
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name" >
@@ -22,6 +22,7 @@
             android:label="@string/app_name" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
@@ -57,6 +58,15 @@
             android:enabled="true"
             android:exported="true" >
         </service>
+
+        <receiver
+            android:name="com.tushar.cmspen.Alarm"
+            android:enabled="true"
+            android:exported="true" >
+            <intent-filter>
+                <action android:name="com.tushar.cmspen.REFRESH" />
+            </intent-filter>
+        </receiver>
     </application>
 
 </manifest>
