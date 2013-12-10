@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.tushar.cmspen"
-    android:versionCode="8"
-    android:versionName="0.3.1" >
+    android:versionCode="11"
+    android:versionName="0.4.1" >
 
     <uses-sdk
         android:minSdkVersion="16"
-        android:targetSdkVersion="17" />
+        android:targetSdkVersion="19" />
 
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
@@ -34,37 +34,11 @@
         </service>
 
         <receiver
-            android:name="com.tushar.cmspen.ScreenReceiver"
+            android:name="com.tushar.cmspen.BootReceiver"
             android:enabled="true"
             android:exported="true" >
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
-            </intent-filter>
-            <intent-filter>
-                <action android:name="android.intent.action.PACKAGE_ADDED" />
-                <action android:name="android.intent.action.PACKAGE_REMOVED" />
-                <action android:name="android.intent.action.PACKAGE_REPLACED" />
-
-                <data android:scheme="package" />
-            </intent-filter>
-            <intent-filter>
-                <action android:name="android.intent.action.ACTION_POWER_CONNECTED" />
-                <action android:name="android.intent.action.ACTION_POWER_DISCONNECTED" />
-            </intent-filter>
-        </receiver>
-
-        <service
-            android:name="com.tushar.cmspen.BackgroundService"
-            android:enabled="true"
-            android:exported="true" >
-        </service>
-
-        <receiver
-            android:name="com.tushar.cmspen.Alarm"
-            android:enabled="true"
-            android:exported="true" >
-            <intent-filter>
-                <action android:name="com.tushar.cmspen.REFRESH" />
             </intent-filter>
         </receiver>
     </application>
