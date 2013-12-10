@@ -45,43 +45,20 @@
 #include <linux/input.h>
 
 #include <android/log.h>
-#define TAG "EventInjector::JNI"
+#define TAG "CMSPen::JNI"
 #define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG  , TAG, __VA_ARGS__) 
 #define LOGV(...) __android_log_print(ANDROID_LOG_VERBOSE, TAG, __VA_ARGS__)
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, TAG, __VA_ARGS__)
 #define LOGW(...) __android_log_print(ANDROID_LOG_WARN, TAG, __VA_ARGS__)
 #define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, TAG, __VA_ARGS__)
-
-#include "EventInjector.h"
+#define EVENT_SIZE  ( sizeof (struct inotify_event) )
+#define BUF_LEN     ( 1024 * ( EVENT_SIZE + 16 ) )
 
 
 
 /* Debug tools
  */
  int g_debug = 0;
- 
-   
-void debug(char *szFormat, ...)
-{
-	if (g_debug == 0) return;
-	//if (strlen(szDbgfile) == 0) return;
-
-	char szBuffer[4096]; //in this buffer we form the message
-	const size_t NUMCHARS = sizeof(szBuffer) / sizeof(szBuffer[0]);
-	const int LASTCHAR = NUMCHARS - 1;
-	//format the input string
-	va_list pArgs;
-	va_start(pArgs, szFormat);
-	// use a bounded buffer size to prevent buffer overruns.  Limit count to
-	// character size minus one to allow for a NULL terminating character.
-	vsnprintf(szBuffer, NUMCHARS - 1, szFormat, pArgs);
-	va_end(pArgs);
-	//ensure that the formatted string is NULL-terminated
-	szBuffer[LASTCHAR] = '\0';
-
-	LOGD(szBuffer);
-	//TextCallback(szBuffer);
-}
 
 
 
@@ -93,13 +70,12 @@ jint Java_net_pocketmagic_android_eventinjector_Events_intEnableDebug( JNIEnv* e
  
 jint JNI_OnLoad(JavaVM *vm, void *reserved)
 {
-	debug("eventinterceptor native lib loaded.");
 	return JNI_VERSION_1_2; //1_2 1_4
 }
 
 void JNI_OnUnload(JavaVM *vm, void *reserved)
 {
-	debug("eventinterceptor native lib unloaded.");
+
 }
 
 static struct typedev {
@@ -133,10 +109,8 @@ const char *device = NULL;
 static int open_device(int index)
 {
 	if (index >= nDevsCount || pDevs == NULL) return -1;
-	debug("open_device prep to open");
 	char *device = pDevs[index].device_path;
 	
-	debug("open_device call %s", device);
     int version;
     int fd;
     
@@ -150,7 +124,6 @@ static int open_device(int index)
 		pDevs[index].ufds.fd = -1;
 		
 		pDevs[index].device_name = NULL;
-		debug("could not open %s, %s", device, strerror(errno));
         return -1;
     }
     
@@ -159,10 +132,8 @@ static int open_device(int index)
 	
     name[sizeof(name) - 1] = '\0';
     if(ioctl(fd, EVIOCGNAME(sizeof(name) - 1), &name) < 1) {
-        debug("could not get device name for %s, %s", device, strerror(errno));
         name[0] = '\0';
     }
-	debug("Device %d: %s: %s", nDevsCount, device, name);
 	
 	pDevs[index].device_name = strdup(name);
     
@@ -175,7 +146,6 @@ int remove_device(int index)
 	if (index >= nDevsCount || pDevs == NULL ) return -1;
 	
 	int count = nDevsCount - index - 1;
-	debug("remove device %d", index);
 	free(pDevs[index].device_path);
 	free(pDevs[index].device_name);
 	
@@ -205,18 +175,15 @@ static int scan_dir(const char *dirname)
             (de->d_name[1] == '.' && de->d_name[2] == '\0')))
             continue;
         strcpy(filename, de->d_name);
-		debug("scan_dir:prepare to open:%s", devname);
 		// add new filename to our structure: devname
 		struct typedev *new_pDevs = realloc(pDevs, sizeof(pDevs[0]) * (nDevsCount + 1));
 		if(new_pDevs == NULL) {
-			debug("out of memory");
 			return -1;
 		}
 		pDevs = new_pDevs;
 		
 		struct pollfd *new_ufds = realloc(ufds, sizeof(ufds[0]) * (nDevsCount + 1));
 		if(new_ufds == NULL) {
-			debug("out of memory");
 			return -1;
 		}
 		ufds = new_ufds; 
@@ -229,32 +196,13 @@ static int scan_dir(const char *dirname)
     }
     closedir(dir);
     return 0;
-} 
-
-jint Java_net_pocketmagic_android_eventinjector_Events_intSendEvent(JNIEnv* env,jobject thiz, jint index, uint16_t type, uint16_t code, int32_t value) {
-	if (index >= nDevsCount || pDevs[index].ufds.fd == -1) return -1;
-	int fd = pDevs[index].ufds.fd;
-	debug("SendEvent call (%d,%d,%d,%d)", fd, type, code, value);
-	struct uinput_event event;
-	int len;
-
-	if (fd <= fileno(stderr)) return;
-
-	memset(&event, 0, sizeof(event));
-	event.type = type;
-	event.code = code;
-	event.value = value;
-
-	len = write(fd, &event, sizeof(event));
-	debug("SendEvent done:%d",len);
-} 
+}
 
 
 
 jint Java_net_pocketmagic_android_eventinjector_Events_ScanFiles( JNIEnv* env,jobject thiz ) {
 	int res = scan_dir(device_path);
 	if(res < 0) {
-		debug("scan dir failed for %s:", device_path);
 		return -1;
 	}
 	
@@ -291,6 +239,35 @@ jint Java_net_pocketmagic_android_eventinjector_Events_PollDev( JNIEnv* env,jobj
 	}
 	return -1;
 }
+
+//Added by Tushar Dudani
+
+jint Java_com_tushar_cmspen_SPenDetection_AddFileChangeListener( JNIEnv* env,jobject thiz,jint index ) {
+	int fd;
+	int wd;
+	int length = 0;
+	if (index >= nDevsCount || pDevs[index].ufds.fd == -1) {LOGD("Device is null.");return -1;}
+	fd = inotify_init();
+	if (fd < 0) {LOGD("Notify failed.");return -1;}
+	if (pDevs[index].device_path == NULL) {LOGD("Device path null");return -1;}
+	wd = inotify_add_watch (fd, pDevs[index].device_path, IN_ACCESS | IN_MODIFY | IN_OPEN);
+	LOGD("Waiting for S Pen event....");
+	while(length <= 0)
+	{
+		length = read( fd, &event, sizeof(event) );
+	}
+	
+	jclass cls = (*env)->FindClass(env, "com/tushar/cmspen/SPenDetection");
+	jmethodID mID = (*env)->GetStaticMethodID(env, cls, "waitForEvent", "()V");
+	LOGD("Calling method waitForEvent()");
+	(*env)->CallStaticVoidMethod(env, thiz, mID);
+	
+	( void ) inotify_rm_watch( fd, wd );
+	( void ) close( fd );
+	return 0;
+}
+
+//end
 
 jint Java_net_pocketmagic_android_eventinjector_Events_getType( JNIEnv* env,jobject thiz ) {
 	return event.type;
