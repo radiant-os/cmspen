@@ -16,131 +16,241 @@
 
 package com.tushar.cmspen;
 
-import java.util.Timer;
-import java.util.TimerTask;
-
 import net.pocketmagic.android.eventinjector.Events;
 import net.pocketmagic.android.eventinjector.Events.InputDevice;
 import android.app.Service;
-import android.content.BroadcastReceiver;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.os.AsyncTask;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Message;
 import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
 import android.os.Vibrator;
 import android.preference.PreferenceManager;
+import android.util.Log;
 
 public class SPenDetection extends Service {
 	Events events = new Events();
 	static Vibrator v;
 	int id = -1;
-	public static int polling = 1000;
-	public static int DET_POLLING = 20;
-	BroadcastReceiver mReceiver;
-	public static int pvalues[] = {100,250,500,750,1000,1250,1500,1750,2000,2250,2500,2750,3000,3250,3500,3750,4000};
+	public static int polling = 35;
 	static Intent i = new Intent("com.samsung.pen.INSERT");
-	public static Timer timer;
+	static Intent SPen_Event = new Intent("com.tushar.cm_spen.SPEN_EVENT");
 	static WakeLock screenLock;
 	static InputDevice idev;
 	static SharedPreferences pref;
 	static SharedPreferences.Editor editor;
+	static EventHandler h;
 	
 	@Override
 	public IBinder onBind(Intent intent) {
 		return null;
 	}
 	
+	static void waitForEvent()
+	{
+		Log.d("CMSPen", "waitForEvent() called");
+		h.sendEmptyMessage(0);
+	}
+	
+	@SuppressWarnings("deprecation")
 	@Override
 	public void onCreate()
 	{
 		events.Init();
 		pref = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 		editor = pref.edit();
-		polling = pvalues[pref.getInt("polling", 0)];
 		id = pref.getInt("id", -1);
         if(id == -1)
         {
         	stopSelf();
+        	Log.d("CMSPen","Service stopped because ID is -1");
         }
         v = (Vibrator) getApplicationContext().getSystemService(VIBRATOR_SERVICE);
-        if(pref.getBoolean("soffchk", false))
-        {
-        	IntentFilter filter = new IntentFilter();
-        	filter.addAction(Intent.ACTION_SCREEN_OFF);
-        	filter.addAction(Intent.ACTION_SCREEN_ON);
-        	mReceiver = new ScreenReceiver();
-        	registerReceiver(mReceiver, filter);
-        }
         try
         {
         	idev = events.m_Devs.get(id);
         	if(idev.Open(true) == false)
         	{
+        		Log.d("CMSPen","Service stopped because Event file could not be opened.");
         		stopSelf();
         	}
         }
         catch(Exception e)
         {
         	stopSelf();
+        	Log.d("CMSPen",e.getMessage());
         }
-        screenLock = ((PowerManager)getSystemService(POWER_SERVICE)).newWakeLock(
-				PowerManager.FULL_WAKE_LOCK | PowerManager.ACQUIRE_CAUSES_WAKEUP, "CM S Pen Add-on");
-        timer = new Timer();
-        if(pref.getBoolean("detached", false))
-        	polling = DET_POLLING;
-        timer.schedule(new SPenTask(), polling);
+        screenLock = ((PowerManager)getSystemService(POWER_SERVICE)).newWakeLock(PowerManager.FULL_WAKE_LOCK | PowerManager.ACQUIRE_CAUSES_WAKEUP, "CMSPen");
+        h = new EventHandler();
+        new Thread() {
+			@Override
+			public void run()
+			{
+				AddListener(id);
+			}
+        }.start();
+	}
+	
+	class EventHandler extends Handler
+	{
+		@Override
+	    public void handleMessage(Message msg) {
+			new EventAsync().execute();
+		}
+	}
+	
+	class EventAsync extends AsyncTask<Void, Void, Void>
+	{
+
+		@Override
+		protected Void doInBackground(Void... params) {
+			boolean inserted = false;
+			boolean sTouched = false;
+			long pressTime = 0;
+			int hPressCount = 0;
+			long firstHoverPressTime = 0;
+			while(true)
+			{
+				if(idev.getPollingEvent() == 0)
+				{
+					if(idev.getSuccessfulPollingType() == 5 && idev.getSuccessfulPollingCode() == 14)
+					{
+						if(idev.getSuccessfulPollingValue() == 1)
+						{
+							i.putExtra("penInsert", false);
+							sendStickyBroadcast(i);
+							screenLock.acquire();
+							screenLock.release();
+							v.vibrate(75);
+							try
+							{
+								Thread.sleep(polling);
+							}
+							catch(Exception e)
+							{
+								e.printStackTrace();
+							}
+						}
+						if(idev.getSuccessfulPollingValue() == 0)
+						{
+							i.putExtra("penInsert", true);
+							sendStickyBroadcast(i);
+							v.vibrate(75);
+							inserted = true;
+						}
+					}
+					if(idev.getSuccessfulPollingType() == 0 && idev.getSuccessfulPollingCode() == 0 && idev.getSuccessfulPollingValue() == 0 && inserted)
+					{
+						break;
+					}
+					if(idev.getSuccessfulPollingType() == 1 && idev.getSuccessfulPollingCode() == 330)
+					{
+						if(idev.getSuccessfulPollingValue() == 1)
+						{
+							sTouched = true;
+						}
+						if(idev.getSuccessfulPollingValue() == 0)
+						{
+							sTouched = false;
+						}
+					}
+					if(idev.getSuccessfulPollingType() == 1 && idev.getSuccessfulPollingCode() == 331)
+					{
+						if(idev.getSuccessfulPollingValue() == 1)
+						{
+							pressTime = System.currentTimeMillis();
+						}
+						if(idev.getSuccessfulPollingValue() == 0)
+						{
+							long pressedFor = System.currentTimeMillis() - pressTime;
+							if(pressedFor >= 500)
+							{
+								if(sTouched)
+								{
+									SPen_Event.putExtra("EVENT_CODE", 2);
+									sendBroadcast(SPen_Event);
+									Log.d("CMSPen","Touch Button Long Press");
+								}
+								else
+								{
+									SPen_Event.putExtra("EVENT_CODE", 4);
+									sendBroadcast(SPen_Event);
+									Log.d("CMSPen","Hover Button Long Press");
+								}
+							}
+							else if(pressedFor >= 20)
+							{
+								if(sTouched)
+								{
+									SPen_Event.putExtra("EVENT_CODE", 1);
+									sendBroadcast(SPen_Event);
+									Log.d("CMSPen","Touch Button Press");
+								}
+								else
+								{
+									hPressCount++;
+									if(hPressCount == 2)
+									{
+										long temp = System.currentTimeMillis() - firstHoverPressTime;
+										Log.d("CMSPen",String.valueOf(temp));
+										if(temp <= 1500)
+										{
+											SPen_Event.putExtra("EVENT_CODE", 5);
+											sendBroadcast(SPen_Event);
+											Log.d("CMSPen","Hover Button Double Press");
+										}
+										else
+										{
+											SPen_Event.putExtra("EVENT_CODE", 3);
+											sendBroadcast(SPen_Event);
+											Log.d("CMSPen","Hover Button Press");
+										}
+										hPressCount = 0;
+									}
+									else
+									{
+										firstHoverPressTime = System.currentTimeMillis();
+										SPen_Event.putExtra("EVENT_CODE", 3);
+										sendBroadcast(SPen_Event);
+										Log.d("CMSPen","Hover Button Press");
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+			return null;
+		}
+		
+		@Override
+	    protected void onPostExecute(Void v) {
+			AddListener(id);
+	    }
+		
 	}
 	
 	@Override
     public void onDestroy() {
     	super.onDestroy();
     	events.Release();
-    	if(pref.getBoolean("soffchk", false))
-    		if(mReceiver != null)
-    			unregisterReceiver(mReceiver);
-    	timer.cancel();
     	if(screenLock.isHeld())
     		screenLock.release();
-    	Alarm.cancelAlarm();
+    	v.cancel();
     }
 	
-	class SPenTask extends TimerTask
+	public int AddListener(int devid)
 	{
-		public void run() {
-    		try{
-    			if (idev.getPollingEvent() == 0) {
-    				if(idev.getSuccessfulPollingType() == 5 && idev.getSuccessfulPollingCode() == 14)
-    				{
-    					if(idev.getSuccessfulPollingValue() == 1)
-    					{
-    						screenLock.acquire();
-    						i.putExtra("penInsert", false);
-    						polling = DET_POLLING;
-    						editor.putBoolean("detached", true);
-    						editor.commit();
-    						sendStickyBroadcast(i);
-    						v.vibrate(75);
-    						screenLock.release();
-    					}
-    					if(idev.getSuccessfulPollingValue() == 0)
-    					{
-    						i.putExtra("penInsert", true);
-    						polling = pvalues[pref.getInt("polling", 0)];
-    						editor.putBoolean("detached", false);
-    						editor.commit();
-    						sendStickyBroadcast(i);
-    						v.vibrate(75);
-    					}
-    				}
-    			}
-    		}
-    		catch(Exception e)
-    		{
-    			stopSelf();
-    		}
-    		timer.schedule(new SPenTask(), polling);
-        }
+		int n = AddFileChangeListener(devid);
+		return n;
 	}
+	
+	private native int AddFileChangeListener(int devid);
+	
+	static {
+        System.loadLibrary("EventInjector");
+    }
 }
