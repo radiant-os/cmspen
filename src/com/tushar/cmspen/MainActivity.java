@@ -31,8 +31,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.widget.CompoundButton;
 import android.widget.CompoundButton.OnCheckedChangeListener;
-import android.widget.SeekBar;
-import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
@@ -62,7 +60,7 @@ public class MainActivity extends Activity {
         	{
         		AlertDialog.Builder builderdonate = new AlertDialog.Builder(this);
         		builderdonate.setTitle("CM S Pen Add-on");
-        		builderdonate.setMessage("Sorry your device is not compatible with this Application. Please email me for further assistance.");
+        		builderdonate.setMessage("Sorry your device is not compatible with this Application.");
         		builderdonate.setNeutralButton("Ok", new DialogInterface.OnClickListener() {
         			public void onClick(DialogInterface dialog, int id) {
         				finish();
@@ -72,122 +70,32 @@ public class MainActivity extends Activity {
         		builderdonate.show();
         	}
         }
-        final int pvalues[] = {100,250,500,750,1000,1250,1500,1750,2000,2250,2500,2750,3000,3250,3500,3750,4000};
-        final TextView polltext = (TextView) findViewById(R.id.pollingvalue);
-        final TextView soffpolltext = (TextView) findViewById(R.id.soffpollingvalue);
         ToggleButton startStop = (ToggleButton) findViewById(R.id.onOfftoggle);
-        final ToggleButton soffchk = (ToggleButton) findViewById(R.id.soffpollingtoggle);
-        final SeekBar pvalue = (SeekBar) findViewById(R.id.polling);
-        final SeekBar soffpvalue = (SeekBar) findViewById(R.id.soffpolling);
         if(pref.getBoolean("enabled", false))
         {
         	startStop.setChecked(true);
+        	StopEventMonitor(MainActivity.this);
+        	StartEventMonitor(MainActivity.this);
         }
-        else
-        {
-        	soffchk.setEnabled(false);
-        	pvalue.setEnabled(false);
-        	soffpvalue.setEnabled(false);
-        }
-        if(pref.getBoolean("soffchk", false))
-        {
-        	soffchk.setChecked(true);
-        }
-        else
-        {
-        	soffpvalue.setEnabled(false);
-        }
-        if(pref.getInt("pollingchoice", -1) == -1)
-        {
-        	SharedPreferences.Editor editor = pref.edit();
-			editor.putInt("pollingchoice", 4);
-			editor.commit();
-        }
-        if(pref.getInt("soffpolling", -1) == -1)
-        {
-        	SharedPreferences.Editor editor = pref.edit();
-			editor.putInt("soffpolling", 8);
-			editor.commit();
-        }
-        pvalue.setProgress(pref.getInt("pollingchoice", 0));
-        polltext.setText("Polling Value: " + String.valueOf(pvalues[pref.getInt("pollingchoice", 0)]));
-        soffpvalue.setProgress(pref.getInt("soffpolling", 0));
-        soffpolltext.setText("Screen-off Polling Value: " + String.valueOf(pvalues[pref.getInt("soffpolling", 0)]));
         startStop.setOnCheckedChangeListener(new OnCheckedChangeListener() {
             public void onCheckedChanged(CompoundButton toggleButton, boolean isChecked) {
                 if(isChecked)
                 {
                 	StartEventMonitor(MainActivity.this);
-    				Toast.makeText(MainActivity.this, "Event monitor started.", Toast.LENGTH_SHORT).show();
+    				Toast.makeText(MainActivity.this, "Detection Enabled", Toast.LENGTH_SHORT).show();
                 	SharedPreferences.Editor editor = pref.edit();
     				editor.putBoolean("enabled", true);
     				editor.commit();
-    				soffchk.setEnabled(true);
-    	        	pvalue.setEnabled(true);
-    	        	soffpvalue.setEnabled(true);
                 }
                 else
                 {
-                	Toast.makeText(MainActivity.this, "Event monitor stopped.", Toast.LENGTH_SHORT).show();
+                	Toast.makeText(MainActivity.this, "Detection Disabled", Toast.LENGTH_SHORT).show();
     				StopEventMonitor(MainActivity.this);
     				SharedPreferences.Editor editor = pref.edit();
     				editor.putBoolean("enabled", false);
     				editor.commit();
-    				soffchk.setEnabled(false);
-    	        	pvalue.setEnabled(false);
-    	        	soffpvalue.setEnabled(false);
                 }
             }
-        });
-        soffchk.setOnCheckedChangeListener(new OnCheckedChangeListener() {
-            public void onCheckedChanged(CompoundButton toggleButton, boolean isChecked) {
-                if(isChecked)
-                {
-                	SharedPreferences.Editor editor = pref.edit();
-    				editor.putBoolean("soffchk", true);
-    				editor.commit();
-    				soffpvalue.setEnabled(true);
-    				StopEventMonitor(MainActivity.this);
-    				StartEventMonitor(MainActivity.this);
-                }
-                else
-                {
-    				SharedPreferences.Editor editor = pref.edit();
-    				editor.putBoolean("soffchk", false);
-    				editor.commit();
-    				soffpvalue.setEnabled(false);
-    				StopEventMonitor(MainActivity.this);
-    				StartEventMonitor(MainActivity.this);
-                }
-            }
-        });
-        pvalue.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener(){
-
-			public void onProgressChanged(SeekBar arg0, int arg1, boolean arg2) {
-				polltext.setText("Polling Value: " + String.valueOf(pvalues[arg1]));
-				SharedPreferences.Editor editor = pref.edit();
-				editor.putInt("pollingchoice", arg1);
-				editor.commit();
-			}
-			public void onStartTrackingTouch(SeekBar seekBar) {
-			}
-			public void onStopTrackingTouch(SeekBar seekBar) {
-				Toast.makeText(MainActivity.this, "Please disable and enable the detection to apply.", Toast.LENGTH_SHORT).show();
-			}
-        });
-        soffpvalue.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener(){
-
-			public void onProgressChanged(SeekBar arg0, int arg1, boolean arg2) {
-				soffpolltext.setText("Screen-off Polling Value: " + String.valueOf(pvalues[arg1]));
-				SharedPreferences.Editor editor = pref.edit();
-				editor.putInt("soffpolling", arg1);
-				editor.commit();
-			}
-			public void onStartTrackingTouch(SeekBar seekBar) {
-			}
-			public void onStopTrackingTouch(SeekBar seekBar) {
-				Toast.makeText(MainActivity.this, "Please disable and enable the detection to apply.", Toast.LENGTH_SHORT).show();
-			}
         });
     }
     
@@ -196,19 +104,11 @@ public class MainActivity extends Activity {
     	super.onDestroy();
     }
 	public static void StopEventMonitor(Context ctx) {
-		SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(ctx);
-		if(pref.getBoolean("soffchk", false))
-			ctx.stopService(new Intent(ctx,SPenDetection.class));
-		else
-			ctx.stopService(new Intent(ctx,BackgroundService.class));
+		ctx.stopService(new Intent(ctx,SPenDetection.class));
 	}
 	
 	public static void StartEventMonitor(Context ctx) {
-		SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(ctx);
-		if(pref.getBoolean("soffchk", false))
-			ctx.startService(new Intent(ctx,SPenDetection.class));
-		else
-			ctx.startService(new Intent(ctx,BackgroundService.class));
+		ctx.startService(new Intent(ctx,SPenDetection.class));
 	}
 	
 	class CheckComp extends AsyncTask<Void, Void, Boolean> {
