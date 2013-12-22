@@ -13,5 +13,13 @@
         android:text="ToggleButton"
         android:textOff="Detection disabled"
         android:textOn="Detection enabled" />
+    
+    <TextView 
+        android:text="A reboot is recommended after enabling the detection."
+        android:textSize="10sp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginTop="20dp"/>
 
 </LinearLayout>
