@@ -35,7 +35,7 @@ public class SPenDetection extends Service {
 	Events events = new Events();
 	static Vibrator v;
 	int id = -1;
-	public static int polling = 35;
+	public static int polling = 20;
 	static Intent i = new Intent("com.samsung.pen.INSERT");
 	static Intent SPen_Event = new Intent("com.tushar.cm_spen.SPEN_EVENT");
 	static WakeLock screenLock;
@@ -125,14 +125,6 @@ public class SPenDetection extends Service {
 							screenLock.acquire();
 							screenLock.release();
 							v.vibrate(75);
-							try
-							{
-								Thread.sleep(polling);
-							}
-							catch(Exception e)
-							{
-								e.printStackTrace();
-							}
 						}
 						if(idev.getSuccessfulPollingValue() == 0)
 						{
@@ -222,13 +214,27 @@ public class SPenDetection extends Service {
 						}
 					}
 				}
+				try
+				{
+					Thread.sleep(polling);
+				}
+				catch(Exception e)
+				{
+					e.printStackTrace();
+				}
 			}
 			return null;
 		}
 		
 		@Override
 	    protected void onPostExecute(Void v) {
-			AddListener(id);
+			new Thread() {
+				@Override
+				public void run()
+				{
+					AddListener(id);
+				}
+	        }.start();
 	    }
 		
 	}
