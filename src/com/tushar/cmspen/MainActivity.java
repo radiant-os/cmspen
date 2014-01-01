@@ -152,7 +152,14 @@ public class MainActivity extends Activity {
 		
 		@Override
 	    protected void onPostExecute(Boolean v) {
-			mDialog.dismiss();
+			try
+			{
+				mDialog.dismiss();
+			}
+			catch(Exception e)
+			{
+				e.printStackTrace();
+			}
 	    }
 	}
 }
