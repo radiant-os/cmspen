@@ -116,7 +116,8 @@ public class SPenDetection extends Service {
 			{
 				if(idev.getPollingEvent() == 0)
 				{
-					if(idev.getSuccessfulPollingType() == 5 && idev.getSuccessfulPollingCode() == 14)
+					Log.d("CMSPen",(String.valueOf(idev.getSuccessfulPollingType()) + " " + String.valueOf(idev.getSuccessfulPollingCode()) + " " + String.valueOf(idev.getSuccessfulPollingValue())));
+					if(idev.getSuccessfulPollingType() == 5 && (idev.getSuccessfulPollingCode() == 14 || idev.getSuccessfulPollingCode() == 19))
 					{
 						if(idev.getSuccessfulPollingValue() == 1)
 						{
