@@ -7,9 +7,9 @@ When the S Pen is detached/inserted a Broadcast is sent out with action "com.sam
 
 When the S Pen button is pressed a Broadcast is sent out with action "com.tushar.cm_spen.SPEN_EVENT" with an integer extra "EVENT_CODE" which has following values for the various events:
 
-  1 - S Pen is touched to screen and Button is pressed
+  1 - S Pen is touching screen and Button is pressed
   
-  2 - S Pen is touched to screen and Button is long-pressed
+  2 - S Pen is touching screen and Button is long-pressed
   
   3 - S Pen is hovering over the screen and Button is pressed
   
