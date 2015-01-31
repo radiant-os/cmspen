@@ -32,10 +32,19 @@ import android.preference.PreferenceManager;
 import android.util.Log;
 
 public class SPenDetection extends Service {
+
+        public static final int TOUCH_BUTTON_PRESS = 1;
+        public static final int TOUCH_BUTTON_LONG_PRESS = 2;
+        public static final int HOVER_BUTTON_PRESS = 3;
+        public static final int HOVER_BUTTON_LONG_PRESS = 4;
+        public static final int HOVER_BUTTON_DOUBLE_PRESS = 5;
+
+        public static final int VIBRATE_TIME = 75;
+
 	Events events = new Events();
 	static Vibrator v;
 	int id = -1;
-	public static int polling = 20;
+	public static final int POLLING = 20;
 	static Intent i = new Intent("com.samsung.pen.INSERT");
 	static Intent SPen_Event = new Intent("com.tushar.cm_spen.SPEN_EVENT");
 	static WakeLock screenLock;
@@ -125,13 +134,13 @@ public class SPenDetection extends Service {
 							sendStickyBroadcast(i);
 							screenLock.acquire();
 							screenLock.release();
-							v.vibrate(75);
+							v.vibrate(VIBRATE_TIME);
 						}
 						if(idev.getSuccessfulPollingValue() == 0)
 						{
 							i.putExtra("penInsert", true);
 							sendStickyBroadcast(i);
-							v.vibrate(75);
+							v.vibrate(VIBRATE_TIME);
 							inserted = true;
 						}
 					}
@@ -163,13 +172,13 @@ public class SPenDetection extends Service {
 							{
 								if(sTouched)
 								{
-									SPen_Event.putExtra("EVENT_CODE", 2);
+									SPen_Event.putExtra("EVENT_CODE", TOUCH_BUTTON_LONG_PRESS);
 									sendBroadcast(SPen_Event);
 									Log.d("CMSPen","Touch Button Long Press");
 								}
 								else
 								{
-									SPen_Event.putExtra("EVENT_CODE", 4);
+									SPen_Event.putExtra("EVENT_CODE", HOVER_BUTTON_LONG_PRESS);
 									sendBroadcast(SPen_Event);
 									Log.d("CMSPen","Hover Button Long Press");
 								}
@@ -178,7 +187,7 @@ public class SPenDetection extends Service {
 							{
 								if(sTouched)
 								{
-									SPen_Event.putExtra("EVENT_CODE", 1);
+									SPen_Event.putExtra("EVENT_CODE", TOUCH_BUTTON_PRESS);
 									sendBroadcast(SPen_Event);
 									Log.d("CMSPen","Touch Button Press");
 								}
@@ -191,13 +200,13 @@ public class SPenDetection extends Service {
 										Log.d("CMSPen",String.valueOf(temp));
 										if(temp <= 1500)
 										{
-											SPen_Event.putExtra("EVENT_CODE", 5);
+											SPen_Event.putExtra("EVENT_CODE", HOVER_BUTTON_DOUBLE_PRESS);
 											sendBroadcast(SPen_Event);
 											Log.d("CMSPen","Hover Button Double Press");
 										}
 										else
 										{
-											SPen_Event.putExtra("EVENT_CODE", 3);
+											SPen_Event.putExtra("EVENT_CODE", HOVER_BUTTON_PRESS);
 											sendBroadcast(SPen_Event);
 											Log.d("CMSPen","Hover Button Press");
 										}
@@ -206,7 +215,7 @@ public class SPenDetection extends Service {
 									else
 									{
 										firstHoverPressTime = System.currentTimeMillis();
-										SPen_Event.putExtra("EVENT_CODE", 3);
+										SPen_Event.putExtra("EVENT_CODE", HOVER_BUTTON_PRESS);
 										sendBroadcast(SPen_Event);
 										Log.d("CMSPen","Hover Button Press");
 									}
@@ -217,7 +226,7 @@ public class SPenDetection extends Service {
 				}
 				try
 				{
-					Thread.sleep(polling);
+					Thread.sleep(POLLING);
 				}
 				catch(Exception e)
 				{
@@ -258,6 +267,6 @@ public class SPenDetection extends Service {
 	private native int AddFileChangeListener(int devid);
 	
 	static {
-        System.loadLibrary("EventInjector");
+        System.loadLibrary("SPenEventInjector");
     }
 }

@@ -129,7 +129,7 @@ public class Events {
     private native static int getValue();
 
     static {
-        System.loadLibrary("EventInjector");
+        System.loadLibrary("SPenEventInjector");
     }
 
 }
