@@ -70,7 +70,7 @@ public class Events {
         public boolean Open(boolean forceOpen) {
             int res = OpenDev(m_nId);
             // if opening fails, we might not have the correct permissions, try changing 660 to 666
-            if (res != 0) {
+            /* if (res != 0) {
                 // possible only if we have root
                 if (forceOpen && Shell.isSuAvailable()) {
                     // set new permissions
@@ -78,7 +78,7 @@ public class Events {
                     // reopen
                     res = OpenDev(m_nId);
                 }
-            }
+            } */
             m_szName = getDevName(m_nId);
             m_bOpen = (res == 0);
             // debug
