@@ -18,13 +18,14 @@ package com.tushar.cmspen;
 
 import android.app.Service;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
+import android.os.SystemClock;
+import android.os.UserHandle;
 import android.os.Vibrator;
 import android.util.Log;
 
@@ -41,6 +42,11 @@ public class SPenDetection extends Service {
 
     public static final int VIBRATE_TIME = 75;
 
+    // from kernel's /include/uapi/linux/input.h
+    public static final int BTN_TOUCH = 0x14a;  //330
+    public static final int BTN_STYLUS = 0x14b; //331
+    public static final int SW_PEN_INSERT = 0x13; //19
+
     Events events = new Events();
     static Vibrator v;
     int id = -1;
@@ -49,8 +55,6 @@ public class SPenDetection extends Service {
     static Intent SPen_Event = new Intent("com.tushar.cm_spen.SPEN_EVENT");
     static WakeLock screenLock;
     static InputDevice idev;
-    static SharedPreferences pref;
-    static SharedPreferences.Editor editor;
     static EventHandler h;
 
     @Override
@@ -154,8 +158,7 @@ public class SPenDetection extends Service {
             long firstHoverPressTime = 0;
             while (true) {
                 if (idev.getPollingEvent() == 0) {
-                    Log.d("CMSPen", (String.valueOf(idev.getSuccessfulPollingType()) + " " + String.valueOf(idev.getSuccessfulPollingCode()) + " " + String.valueOf(idev.getSuccessfulPollingValue())));
-                    if (idev.getSuccessfulPollingType() == 5 && (idev.getSuccessfulPollingCode() == 14 || idev.getSuccessfulPollingCode() == 19)) {
+                    if (idev.getSuccessfulPollingType() == 5 && (idev.getSuccessfulPollingCode() == 14 || idev.getSuccessfulPollingCode() == SW_PEN_INSERT)) {
                         if (idev.getSuccessfulPollingValue() == 1) {
                             i.putExtra("penInsert", false);
                             sendStickyBroadcast(i);
@@ -173,7 +176,9 @@ public class SPenDetection extends Service {
                     if (idev.getSuccessfulPollingType() == 0 && idev.getSuccessfulPollingCode() == 0 && idev.getSuccessfulPollingValue() == 0 && inserted) {
                         break;
                     }
-                    if (idev.getSuccessfulPollingType() == 1 && idev.getSuccessfulPollingCode() == 330) {
+                  //  if ((idev.getSuccessfulPollingType() !=0))
+                  //      Log.d("CMSPen", (String.valueOf(idev.getSuccessfulPollingType()) + " " + String.valueOf(idev.getSuccessfulPollingCode()) + " " + String.valueOf(idev.getSuccessfulPollingValue())));
+                    if (idev.getSuccessfulPollingType() == 1 && idev.getSuccessfulPollingCode() == BTN_TOUCH) {
                         if (idev.getSuccessfulPollingValue() == 1) {
                             sTouched = true;
                         }
@@ -181,7 +186,7 @@ public class SPenDetection extends Service {
                             sTouched = false;
                         }
                     }
-                    if (idev.getSuccessfulPollingType() == 1 && idev.getSuccessfulPollingCode() == 331) {
+                    if (idev.getSuccessfulPollingType() == 1 && idev.getSuccessfulPollingCode() == BTN_STYLUS) {
                         if (idev.getSuccessfulPollingValue() == 1) {
                             pressTime = System.currentTimeMillis();
                         }
@@ -190,17 +195,17 @@ public class SPenDetection extends Service {
                             if (pressedFor >= 500) {
                                 if (sTouched) {
                                     SPen_Event.putExtra("EVENT_CODE", TOUCH_BUTTON_LONG_PRESS);
-                                    sendBroadcast(SPen_Event);
+                                    sendBroadcastAsUser(SPen_Event, new UserHandle(UserHandle.USER_CURRENT_OR_SELF));
                                     Log.d("CMSPen", "Touch Button Long Press");
                                 } else {
                                     SPen_Event.putExtra("EVENT_CODE", HOVER_BUTTON_LONG_PRESS);
-                                    sendBroadcast(SPen_Event);
+                                    sendBroadcastAsUser(SPen_Event, new UserHandle(UserHandle.USER_CURRENT_OR_SELF));
                                     Log.d("CMSPen", "Hover Button Long Press");
                                 }
                             } else if (pressedFor >= 20) {
                                 if (sTouched) {
                                     SPen_Event.putExtra("EVENT_CODE", TOUCH_BUTTON_PRESS);
-                                    sendBroadcast(SPen_Event);
+                                    sendBroadcastAsUser(SPen_Event, new UserHandle(UserHandle.USER_CURRENT_OR_SELF));
                                     Log.d("CMSPen", "Touch Button Press");
                                 } else {
                                     hPressCount++;
@@ -209,29 +214,30 @@ public class SPenDetection extends Service {
                                         Log.d("CMSPen", String.valueOf(temp));
                                         if (temp <= 1500) {
                                             SPen_Event.putExtra("EVENT_CODE", HOVER_BUTTON_DOUBLE_PRESS);
-                                            sendBroadcast(SPen_Event);
+                                            sendBroadcastAsUser(SPen_Event, new UserHandle(UserHandle.USER_CURRENT_OR_SELF));
                                             Log.d("CMSPen", "Hover Button Double Press");
                                         } else {
                                             SPen_Event.putExtra("EVENT_CODE", HOVER_BUTTON_PRESS);
-                                            sendBroadcast(SPen_Event);
+                                            sendBroadcastAsUser(SPen_Event, new UserHandle(UserHandle.USER_CURRENT_OR_SELF));
                                             Log.d("CMSPen", "Hover Button Press");
                                         }
                                         hPressCount = 0;
                                     } else {
                                         firstHoverPressTime = System.currentTimeMillis();
                                         SPen_Event.putExtra("EVENT_CODE", HOVER_BUTTON_PRESS);
-                                        sendBroadcast(SPen_Event);
+                                        sendBroadcastAsUser(SPen_Event, new UserHandle(UserHandle.USER_CURRENT_OR_SELF));
                                         Log.d("CMSPen", "Hover Button Press");
                                     }
                                 }
                             }
                         }
                     }
-                }
-                try {
-                    Thread.sleep(POLLING);
-                } catch (Exception e) {
-                    e.printStackTrace();
+                } else {
+                    try {
+                        SystemClock.sleep(POLLING);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
                 }
             }
             return null;
@@ -239,6 +245,7 @@ public class SPenDetection extends Service {
 
         @Override
         protected void onPostExecute(Void v) {
+
             new Thread() {
                 @Override
                 public void run() {
@@ -259,8 +266,7 @@ public class SPenDetection extends Service {
     }
 
     public int AddListener(int devid) {
-        int n = AddFileChangeListener(devid);
-        return n;
+        return AddFileChangeListener(devid);
     }
 
     private native int AddFileChangeListener(int devid);

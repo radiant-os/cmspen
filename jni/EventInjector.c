@@ -242,7 +242,7 @@ jint Java_net_pocketmagic_android_eventinjector_Events_PollDev( JNIEnv* env,jobj
 
 //Added by Tushar Dudani
 
-jint Java_com_tushar_cmspen_SPenDetection_AddFileChangeListener( JNIEnv* env,jobject thiz,jint index ) {
+jint Java_com_tushar_cmspen_SPenDetection_AddFileChangeListener( JNIEnv* env, jobject thiz, jint index ) {
 	int fd;
 	int wd;
 	int length = 0;
@@ -251,7 +251,7 @@ jint Java_com_tushar_cmspen_SPenDetection_AddFileChangeListener( JNIEnv* env,job
 	if (fd < 0) {LOGD("Notify failed.");return -1;}
 	if (pDevs[index].device_path == NULL) {LOGD("Device path null");return -1;}
 	wd = inotify_add_watch (fd, pDevs[index].device_path, IN_ACCESS | IN_MODIFY | IN_OPEN);
-	LOGD("Waiting for S Pen event....");
+	//LOGD("Waiting for S Pen event....");
 	while(length <= 0)
 	{
 		length = read( fd, &event, sizeof(event) );
@@ -259,8 +259,8 @@ jint Java_com_tushar_cmspen_SPenDetection_AddFileChangeListener( JNIEnv* env,job
 	
 	jclass cls = (*env)->FindClass(env, "com/tushar/cmspen/SPenDetection");
 	jmethodID mID = (*env)->GetStaticMethodID(env, cls, "waitForEvent", "()V");
-	LOGD("Calling method waitForEvent()");
-	(*env)->CallStaticVoidMethod(env, cls, mID);
+	//LOGD("Calling method waitForEvent()");
+	(*env)->CallStaticVoidMethod(env, thiz, mID);
 	
 	( void ) inotify_rm_watch( fd, wd );
 	( void ) close( fd );

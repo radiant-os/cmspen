@@ -1,7 +1,5 @@
 <resources>
 
-    <string name="app_name">CM SPen Add-on</string>
-    <string name="toggle_button">ToggleButton</string>
-    <string name="reboot_recommended">A reboot is recommended after enabling the detection.</string>
+    <string name="app_name">CyanogenMod SPen Add-on</string>
 
 </resources>
