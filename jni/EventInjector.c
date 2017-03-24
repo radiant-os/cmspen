@@ -88,7 +88,7 @@ static struct typedev {
 	char *device_name;
 } *pDevs = NULL;
 struct pollfd *ufds;
-static int nDevsCount;
+static nfds_t nDevsCount;
 
 const char *device_path = "/dev/input";
 
@@ -234,7 +234,7 @@ jint Java_net_pocketmagic_android_eventinjector_Events_PollDev( JNIEnv* env,jobj
 	int pollres = poll(ufds, nDevsCount, -1);
 	if(ufds[index].revents) {
 		if(ufds[index].revents & POLLIN) {
-			int res = read(ufds[index].fd, &event, sizeof(event));
+			ssize_t res = read(ufds[index].fd, &event, sizeof(event));
 			if(res < (int)sizeof(event)) {
 				return 1;
 			} 
@@ -249,7 +249,7 @@ jint Java_net_pocketmagic_android_eventinjector_Events_PollDev( JNIEnv* env,jobj
 jint Java_org_lineageos_cmspen_SPenDetection_AddFileChangeListener( JNIEnv* env, jobject thiz, jint index ) {
 	int fd;
 	int wd;
-	int length = 0;
+	ssize_t length = 0;
 	if (index >= nDevsCount || pDevs[index].ufds.fd == -1) {LOGD("Device is null.");return -1;}
 	fd = inotify_init();
 	if (fd < 0) {LOGD("Notify failed.");return -1;}
