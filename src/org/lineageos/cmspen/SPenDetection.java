@@ -14,7 +14,7 @@
  limitations under the License.
  */
 
-package com.tushar.cmspen;
+package org.lineageos.cmspen;
 
 import android.app.Service;
 import android.content.Intent;

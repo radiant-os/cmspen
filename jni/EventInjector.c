@@ -242,7 +242,7 @@ jint Java_net_pocketmagic_android_eventinjector_Events_PollDev( JNIEnv* env,jobj
 
 //Added by Tushar Dudani
 
-jint Java_com_tushar_cmspen_SPenDetection_AddFileChangeListener( JNIEnv* env, jobject thiz, jint index ) {
+jint Java_org_lineageos_cmspen_SPenDetection_AddFileChangeListener( JNIEnv* env, jobject thiz, jint index ) {
 	int fd;
 	int wd;
 	int length = 0;
