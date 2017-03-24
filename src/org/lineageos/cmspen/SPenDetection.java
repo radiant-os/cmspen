@@ -1,4 +1,12 @@
-/***
+/**
+ Code modifications to original Tushar Dudani source are released under the GPLv2
+ Copyright 2015 CyanogenMod
+ Copyright 2017 LineageOS
+ **/
+
+/**
+
+ Original author:
  Copyright 2013-2015 Tushar Dudani
 
  Licensed under the Apache License, Version 2.0 (the "License");

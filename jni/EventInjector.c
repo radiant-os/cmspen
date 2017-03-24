@@ -2,6 +2,10 @@
  * Android Event Injector 
  *
  * Copyright (c) 2013 by Radu Motisan , radu.motisan@gmail.com
+ * Original at https://github.com/radhoo/android-event-injector/blob/master/jni/EventInjector.c
+ * Modifications by Tushar Dudani (previously available at https://github.com/tushar9989/cmspen)
+ * Additional modifications (c) 2015 by the CyanogenMod community
+ * Additional modifications (c) 2017 by the LineageOS community
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
