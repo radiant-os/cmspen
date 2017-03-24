@@ -261,7 +261,7 @@ jint Java_org_lineageos_cmspen_SPenDetection_AddFileChangeListener( JNIEnv* env,
 		length = read( fd, &event, sizeof(event) );
 	}
 	
-	jclass cls = (*env)->FindClass(env, "com/tushar/cmspen/SPenDetection");
+	jclass cls = (*env)->FindClass(env, "org/lineageos/cmspen/SPenDetection");
 	jmethodID mID = (*env)->GetStaticMethodID(env, cls, "waitForEvent", "()V");
 	//LOGD("Calling method waitForEvent()");
 	(*env)->CallStaticVoidMethod(env, thiz, mID);
