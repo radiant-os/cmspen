@@ -169,14 +169,14 @@ public class SPenDetection extends Service {
                     if (idev.getSuccessfulPollingType() == 5 && (idev.getSuccessfulPollingCode() == 14 || idev.getSuccessfulPollingCode() == SW_PEN_INSERT)) {
                         if (idev.getSuccessfulPollingValue() == 1) {
                             i.putExtra("penInsert", false);
-                            sendStickyBroadcast(i);
+                            sendBroadcastAsUser(i, new UserHandle(UserHandle.ALL));
                             screenLock.acquire();
                             screenLock.release();
                             v.vibrate(VIBRATE_TIME);
                         }
                         if (idev.getSuccessfulPollingValue() == 0) {
                             i.putExtra("penInsert", true);
-                            sendStickyBroadcast(i);
+                            sendBroadcastAsUser(i, new UserHandle(UserHandle.ALL));
                             v.vibrate(VIBRATE_TIME);
                             inserted = true;
                         }
@@ -203,17 +203,17 @@ public class SPenDetection extends Service {
                             if (pressedFor >= 500) {
                                 if (sTouched) {
                                     SPen_Event.putExtra("EVENT_CODE", TOUCH_BUTTON_LONG_PRESS);
-                                    sendBroadcastAsUser(SPen_Event, new UserHandle(UserHandle.USER_CURRENT_OR_SELF));
+                                    sendBroadcastAsUser(SPen_Event, new UserHandle(UserHandle.ALL));
                                     Log.d("CMSPen", "Touch Button Long Press");
                                 } else {
                                     SPen_Event.putExtra("EVENT_CODE", HOVER_BUTTON_LONG_PRESS);
-                                    sendBroadcastAsUser(SPen_Event, new UserHandle(UserHandle.USER_CURRENT_OR_SELF));
+                                    sendBroadcastAsUser(SPen_Event, new UserHandle(UserHandle.ALL));
                                     Log.d("CMSPen", "Hover Button Long Press");
                                 }
                             } else if (pressedFor >= 20) {
                                 if (sTouched) {
                                     SPen_Event.putExtra("EVENT_CODE", TOUCH_BUTTON_PRESS);
-                                    sendBroadcastAsUser(SPen_Event, new UserHandle(UserHandle.USER_CURRENT_OR_SELF));
+                                    sendBroadcastAsUser(SPen_Event, new UserHandle(UserHandle.ALL));
                                     Log.d("CMSPen", "Touch Button Press");
                                 } else {
                                     hPressCount++;
@@ -222,18 +222,18 @@ public class SPenDetection extends Service {
                                         Log.d("CMSPen", String.valueOf(temp));
                                         if (temp <= 1500) {
                                             SPen_Event.putExtra("EVENT_CODE", HOVER_BUTTON_DOUBLE_PRESS);
-                                            sendBroadcastAsUser(SPen_Event, new UserHandle(UserHandle.USER_CURRENT_OR_SELF));
+                                            sendBroadcastAsUser(SPen_Event, new UserHandle(UserHandle.ALL));
                                             Log.d("CMSPen", "Hover Button Double Press");
                                         } else {
                                             SPen_Event.putExtra("EVENT_CODE", HOVER_BUTTON_PRESS);
-                                            sendBroadcastAsUser(SPen_Event, new UserHandle(UserHandle.USER_CURRENT_OR_SELF));
+                                            sendBroadcastAsUser(SPen_Event, new UserHandle(UserHandle.ALL));
                                             Log.d("CMSPen", "Hover Button Press");
                                         }
                                         hPressCount = 0;
                                     } else {
                                         firstHoverPressTime = System.currentTimeMillis();
                                         SPen_Event.putExtra("EVENT_CODE", HOVER_BUTTON_PRESS);
-                                        sendBroadcastAsUser(SPen_Event, new UserHandle(UserHandle.USER_CURRENT_OR_SELF));
+                                        sendBroadcastAsUser(SPen_Event, new UserHandle(UserHandle.ALL));
                                         Log.d("CMSPen", "Hover Button Press");
                                     }
                                 }
