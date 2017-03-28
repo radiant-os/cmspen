@@ -8,7 +8,8 @@ public class BootReceiver extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context ctx, Intent i) {
-        ctx.startService(new Intent(ctx, org.lineageos.cmspen.SPenDetection.class));
+        if (i.getAction().equalsIgnoreCase("android.intent.action.BOOT_COMPLETED")) {
+            ctx.startService(new Intent(ctx, SPenDetection.class));
+        }
     }
-
 }
