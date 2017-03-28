@@ -31,6 +31,14 @@ LOCAL_PRIVILEGED_MODULE := true
 LOCAL_PACKAGE_NAME := CMSPen
 LOCAL_LDLIBS  := -llog
 LOCAL_JNI_SHARED_LIBRARIES := libSPenEventInjector
+
+ifneq ($(INCREMENTAL_BUILDS),)
+    LOCAL_PROGUARD_ENABLED := disabled
+    LOCAL_JACK_ENABLED := incremental
+    LOCAL_DX_FLAGS := --multi-dex
+    LOCAL_JACK_FLAGS := --multi-dex native
+endif
+
 include $(BUILD_PACKAGE)
 
 include $(call all-makefiles-under,$(LOCAL_PATH))
