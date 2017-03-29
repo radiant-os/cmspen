@@ -16,4 +16,5 @@
 
 APP_PROJECT_PATH := $(call my-dir)
 APP_MODULES      := SPenEventInjector
+LOCAL_SHARED_LIBRARIES := liblog
 
