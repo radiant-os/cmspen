@@ -114,6 +114,10 @@ public class SPenDetection extends Service {
         }
     }
 
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        return START_STICKY;
+    }
 
     class CheckComp extends AsyncTask<Void, Void, Boolean> {
         @Override
