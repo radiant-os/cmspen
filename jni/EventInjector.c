@@ -66,7 +66,7 @@
 
 
 
-jint Java_net_pocketmagic_android_eventinjector_Events_intEnableDebug( JNIEnv* env,jobject thiz, jint enable ) {
+JNIEXPORT jint JNICALL Java_net_pocketmagic_android_eventinjector_Events_intEnableDebug( JNIEnv* env,jobject thiz, jint enable ) {
 
 	g_debug = enable;
 	return g_debug;
@@ -204,7 +204,7 @@ static int scan_dir(const char *dirname)
 
 
 
-jint Java_net_pocketmagic_android_eventinjector_Events_ScanFiles( JNIEnv* env,jobject thiz ) {
+JNIEXPORT jint JNICALL Java_net_pocketmagic_android_eventinjector_Events_ScanFiles( JNIEnv* env,jobject thiz ) {
 	int res = scan_dir(device_path);
 	if(res < 0) {
 		return -1;
@@ -213,23 +213,23 @@ jint Java_net_pocketmagic_android_eventinjector_Events_ScanFiles( JNIEnv* env,jo
 	return nDevsCount;
 }
 
-jstring Java_net_pocketmagic_android_eventinjector_Events_getDevPath( JNIEnv* env,jobject thiz, jint index) {
+JNIEXPORT jstring JNICALL Java_net_pocketmagic_android_eventinjector_Events_getDevPath( JNIEnv* env,jobject thiz, jint index) {
 	return (*env)->NewStringUTF(env, pDevs[index].device_path);
 }
-jstring Java_net_pocketmagic_android_eventinjector_Events_getDevName( JNIEnv* env,jobject thiz, jint index) {
+JNIEXPORT jstring JNICALL Java_net_pocketmagic_android_eventinjector_Events_getDevName( JNIEnv* env,jobject thiz, jint index) {
 	if (pDevs[index].device_name == NULL) return NULL;
 	else return (*env)->NewStringUTF(env, pDevs[index].device_name);
 }
 
-jint Java_net_pocketmagic_android_eventinjector_Events_OpenDev( JNIEnv* env,jobject thiz, jint index ) {
+JNIEXPORT jint JNICALL Java_net_pocketmagic_android_eventinjector_Events_OpenDev( JNIEnv* env,jobject thiz, jint index ) {
 	return open_device(index);
 }
 
-jint Java_net_pocketmagic_android_eventinjector_Events_RemoveDev( JNIEnv* env,jobject thiz, jint index ) {
+JNIEXPORT jint JNICALL Java_net_pocketmagic_android_eventinjector_Events_RemoveDev( JNIEnv* env,jobject thiz, jint index ) {
 	return remove_device(index);
 }
 
-jint Java_net_pocketmagic_android_eventinjector_Events_PollDev( JNIEnv* env,jobject thiz, jint index ) {
+JNIEXPORT jint JNICALL Java_net_pocketmagic_android_eventinjector_Events_PollDev( JNIEnv* env,jobject thiz, jint index ) {
 	if (index >= nDevsCount || pDevs[index].ufds.fd == -1) return -1;
 	int pollres = poll(ufds, nDevsCount, -1);
 	if(ufds[index].revents) {
@@ -273,14 +273,14 @@ JNIEXPORT jint JNICALL Java_org_lineageos_cmspen_SPenDetection_AddFileChangeList
 
 //end
 
-jint Java_net_pocketmagic_android_eventinjector_Events_getType( JNIEnv* env,jobject thiz ) {
+JNIEXPORT jint JNICALL Java_net_pocketmagic_android_eventinjector_Events_getType( JNIEnv* env,jobject thiz ) {
 	return event.type;
 }
 
-jint Java_net_pocketmagic_android_eventinjector_Events_getCode( JNIEnv* env,jobject thiz ) {
+JNIEXPORT jint JNICALL Java_net_pocketmagic_android_eventinjector_Events_getCode( JNIEnv* env,jobject thiz ) {
 	return event.code;
 }
 
-jint Java_net_pocketmagic_android_eventinjector_Events_getValue( JNIEnv* env,jobject thiz ) {
+JNIEXPORT jint JNICALL Java_net_pocketmagic_android_eventinjector_Events_getValue( JNIEnv* env,jobject thiz ) {
 	return event.value;
 }
