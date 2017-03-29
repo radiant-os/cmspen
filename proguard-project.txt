@@ -18,3 +18,13 @@
 #-keepclassmembers class fqcn.of.javascript.interface.for.webview {
 #   public *;
 #}
+
+-dontobfuscate
+-keepclasseswithmembernames class * {
+    native <methods>;
+}
+
+-keepclasseswithmembernames class * {
+     @org.lineageos.cmspen.* <methods>;
+     @net.pocketmagic.android.eventinjection.* <methods>;
+ }

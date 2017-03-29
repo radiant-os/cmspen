@@ -67,11 +67,14 @@ android {
         debug {
         }
         release {
-            minifyEnabled true
-            shrinkResources true
+            minifyEnabled false
+            shrinkResources false
             debuggable false
             jniDebuggable true
             zipAlignEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'),
+                    'proguard-project.txt'
+
         }
     }
     externalNativeBuild {
