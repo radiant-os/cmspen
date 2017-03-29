@@ -32,8 +32,9 @@ LOCAL_PACKAGE_NAME := CMSPen
 LOCAL_LDLIBS  := -llog
 LOCAL_JNI_SHARED_LIBRARIES := libSPenEventInjector
 
+LOCAL_PROGUARD_ENABLED := disabled
+
 ifneq ($(INCREMENTAL_BUILDS),)
-    LOCAL_PROGUARD_ENABLED := disabled
     LOCAL_JACK_ENABLED := incremental
     LOCAL_DX_FLAGS := --multi-dex
     LOCAL_JACK_FLAGS := --multi-dex native

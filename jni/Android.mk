@@ -21,4 +21,5 @@ LOCAL_LDLIBS := -llog
 LOCAL_MODULE_TAGS := optional
 LOCAL_MODULE    := libSPenEventInjector
 LOCAL_SRC_FILES := EventInjector.c
+LOCAL_PROGUARD_ENABLED := disabled
 include $(BUILD_SHARED_LIBRARY)
